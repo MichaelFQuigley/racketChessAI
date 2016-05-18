@@ -7,6 +7,7 @@
 (provide user_select_pos)
 
 (define game_board (new board_pieces%))
+(define team_turn 'white)
 (define (get_board) game_board)
 (define (get_pieces) (send game_board get_pieces))
 (define user_selected_pos #f)

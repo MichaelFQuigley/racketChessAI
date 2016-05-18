@@ -97,12 +97,18 @@
          [y_pos (if [equal? (get-field piece_team piece) 'black] 
                  (add1 (cadr position)) 
                  (sub1 (cadr position)))]
+        [y_pos2 (if [equal? (get-field piece_team piece) 'black] 
+                 (add1 y_pos) 
+                 (sub1 y_pos))]
          [diag_pos1 (list (add1 (car position)) y_pos)]
          [diag_pos2 (list (sub1 (car position)) y_pos)])
    (if [in_bounds? (list 0 y_pos)]
     (append 
      (if [not (has_piece? (list (car position) y_pos))]
-      (list (list (car position) y_pos))
+      (if [and (not (has_piece? (list (car position) y_pos2)))
+            (or (equal? (cadr position) 6) (equal? (cadr position) 1))]
+       (list (list (car position) y_pos) (list (car position) y_pos2))
+      (list (list (car position) y_pos)))
       '())
      (if [and (has_piece? diag_pos1)
                (send piece not_my_team? (get_piece diag_pos1))]
