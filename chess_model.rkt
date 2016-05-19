@@ -70,6 +70,33 @@
  (define/public (has_piece? position)
   (hash-has-key? pieces position))
 
+ (define/public (in_check? team)
+  (define (is_threat_piece? pos test_type) 
+   (if (has_piece? pos)
+    (let ([piece (get_piece pos)])
+     (and (send piece not_my_team? team) (equal? (send piece get_piece_type) test_type)))
+    #f))
+
+  (define (threat_from_type? king_pos test_type legal_moves)
+     (cond
+      [(empty? legal_moves) #f]
+      [(is_threat_piece? (car legal_moves) test_type) #t]
+      [else (threat_from_type? king_pos test_type (cdr legal_moves))]))
+  (let* ([king_pos (if (equal? team 'white) white_king_pos black_king_pos)]
+         [vert_legals (get_vert_legal_moves king_pos)]
+         [diag_legals (get_diag_legal_moves king_pos)]
+         [pawn_legals (get_pawn_legal_moves king_pos)]
+         [king_legals (get_king_legal_moves king_pos)]
+         [knight_legals (get_knight_legal_moves king_pos)])
+         (or
+          (threat_from_type? king_pos 'queen vert_legals)
+          (threat_from_type? king_pos 'queen diag_legals)
+          (threat_from_type? king_pos 'pawn pawn_legals)
+          (threat_from_type? king_pos 'king king_legals)
+          (threat_from_type? king_pos 'rook vert_legals)
+          (threat_from_type? king_pos 'bishop diag_legals)
+          (threat_from_type? king_pos 'knight knight_legals))))
+
  (define/public (is_legal_move? old_pos new_pos)
   (let find_move ([legal_moves (get_legal_moves old_pos)])
    (if (not (empty? legal_moves))
@@ -83,13 +110,11 @@
    ['pawn (get_pawn_legal_moves position)]
    ['bishop (get_diag_legal_moves position)]
    ['rook (get_vert_legal_moves position)]
-   ['knight (king_knight_legal_moves_helper position 
-       `((1 2) (-1 2) (1 -2) (-1 -2) (2 1) (2 -1) (-2 1) (-2 -1)))]
+   ['knight (get_knight_legal_moves position)]
    ['queen (append
              (get_vert_legal_moves position)
              (get_diag_legal_moves position))]
-   ['king (king_knight_legal_moves_helper position 
-       `((1 1) (-1 1) (1 -1) (-1 -1) (0 1) (0 -1) (1 0) (-1 0)))]
+   ['king (get_king_legal_moves position)]
    [_ (error "invalid piece type")]))
 
  (define (get_pawn_legal_moves position) 
@@ -144,6 +169,12 @@
     (get_legal_moves_helper pos (lambda(pos)(element_add pos '(0 -1))) (get_piece pos))
     (get_legal_moves_helper pos (lambda(pos)(element_add pos '(1 0))) (get_piece pos))
     (get_legal_moves_helper pos (lambda(pos)(element_add pos '(-1 0))) (get_piece pos))))
+
+  (define (get_knight_legal_moves position)
+       (king_knight_legal_moves_helper position `((1 2) (-1 2) (1 -2) (-1 -2) (2 1) (2 -1) (-2 1) (-2 -1))))
+
+  (define (get_king_legal_moves position)
+   (king_knight_legal_moves_helper position `((1 1) (-1 1) (1 -1) (-1 -1) (0 1) (0 -1) (1 0) (-1 0))))
 
   (define (king_knight_legal_moves_helper position deltas)
    (foldl (lambda (x y)

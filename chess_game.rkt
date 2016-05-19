@@ -14,16 +14,20 @@
 (define (user_pos_selected?) user_selected_pos)
 (define (this_user_pos_selected? pos) (equal? pos user_selected_pos))
 
+;try_move: returns true if move was successfully made
 (define (try_move old_pos new_pos)
- (when (and 
-      (send game_board has_piece? user_selected_pos)
-      (not (equal? user_selected_pos new_pos))
+ (if (and 
+      (send game_board has_piece? old_pos)
+      (not (equal? old_pos new_pos))
       (send game_board is_legal_move? old_pos new_pos))
   (begin
-   (send game_board move_and_update! user_selected_pos new_pos)))
-   (set! user_selected_pos #f))
+   (send game_board move_and_update! old_pos new_pos)
+    #t)
+    #f))
 
 (define (user_select_pos pos) 
  (if (not (equal? user_selected_pos #f))
-  (try_move user_selected_pos pos)
-   (set! user_selected_pos pos)))
+  (begin
+   (try_move user_selected_pos pos) 
+   (set! user_selected_pos #f))
+  (set! user_selected_pos pos)))
