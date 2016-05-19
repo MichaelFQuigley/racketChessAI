@@ -47,6 +47,16 @@
             (get-field black_king_pos this))])
    `(,(hash-remove (hash-set pieces new_pos piece) orig_pos) ,temp_white_king_pos ,temp_black_king_pos)))
 
+  (define/public (get_team_piece_score team)
+    (foldl (lambda (pos acc)
+            (let ([pb (get_piece pos)])
+            (cond
+             [(equal? team 'both) (+ acc (send pb get_piece_value))]
+             [(equal? team (get-field piece_team pb)) (+ acc (send pb get_piece_value))]
+             [else acc])))
+     0 
+     (hash-keys pieces)))
+
   (define/public (move_and_get_update old_pos new_pos)
    (match (move_piece old_pos new_pos)
     [(list pc w_pos b_pos) (new board_pieces% [new_pieces pc]
@@ -104,6 +114,9 @@
      #t
      (find_move (cdr legal_moves)))
      #f)))
+
+ (define/public (get_all_piece_positions)
+  (hash-values pieces))
 
  (define/public (get_legal_moves position)
   (match (send (get_piece position) get_piece_type)
