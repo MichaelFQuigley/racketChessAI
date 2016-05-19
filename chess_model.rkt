@@ -4,9 +4,7 @@
 (define board_pieces%
  (class object% 
   (super-new)
-  (field [white_king_pos '(4 7)])
-  (field [black_king_pos '(4 0)])
-  (define pieces (make-immutable-hash
+  (init [new_pieces (make-immutable-hash
                   (append (list
                    `((0 0) ,(new rook_piece%   [team 'black]))
                    `((1 0) ,(new knight_piece% [team 'black]))
@@ -29,8 +27,12 @@
                       `(((,x ,y) ,(new pawn_piece% [team (if (equal? y 1) 'black 'white)])))
                       (cons 
                       `((,x ,y) ,(new pawn_piece% [team (if (equal? y 1) 'black 'white)]))
-                      (make_pawns (modulo (+ x 1) 8) (if [equal? x 7] 6 y))))))))
-
+                      (make_pawns (modulo (+ x 1) 8) (if [equal? x 7] 6 y)))))))]
+           [new_white_king_pos '(4 7)]
+           [new_black_king_pos '(4 0)])
+  (field [white_king_pos new_white_king_pos])
+  (field [black_king_pos new_black_king_pos])
+  (define pieces new_pieces)
   (define (element_add listA listB)
    (map (lambda (n1 n2) (+ n1 n2)) listA listB))
 
@@ -45,14 +47,11 @@
             (get-field black_king_pos this))])
    `(,(hash-remove (hash-set pieces new_pos piece) orig_pos) ,temp_white_king_pos ,temp_black_king_pos)))
 
-  (define/public (move_and_update! old_pos new_pos)
+  (define/public (move_and_get_update old_pos new_pos)
    (match (move_piece old_pos new_pos)
-    [(list a b c) (update_pieces!  a b c)]))
-
-  (define/public (update_pieces! new_pieces new_white_king_pos new_black_king_pos)
-   (set! pieces new_pieces)
-   (set-field! white_king_pos this new_white_king_pos)
-   (set-field! black_king_pos this new_black_king_pos))
+    [(list pc w_pos b_pos) (new board_pieces% [new_pieces pc]
+                                              [new_white_king_pos w_pos]
+                                              [new_black_king_pos b_pos])]))
 
   (define/public (get_pieces) pieces)
 
@@ -74,7 +73,8 @@
   (define (is_threat_piece? pos test_type) 
    (if (has_piece? pos)
     (let ([piece (get_piece pos)])
-     (and (send piece not_my_team? team) (equal? (send piece get_piece_type) test_type)))
+     (and (not (equal? (get-field piece_team piece) team)) 
+      (equal? (send piece get_piece_type) test_type)))
     #f))
 
   (define (threat_from_type? king_pos test_type legal_moves)

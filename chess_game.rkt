@@ -20,9 +20,10 @@
       (send game_board has_piece? old_pos)
       (not (equal? old_pos new_pos))
       (send game_board is_legal_move? old_pos new_pos))
-  (begin
-   (send game_board move_and_update! old_pos new_pos)
-    #t)
+   (let ([new_board (send game_board move_and_get_update old_pos new_pos)])
+    (if [not (send new_board in_check? team_turn)]
+     (begin (set! game_board new_board) #t)
+     #f))
     #f))
 
 (define (user_select_pos pos) 
