@@ -43,7 +43,7 @@
 (define (ai_move chess_agent pieces)
  (let* ([minimax_res (send chess_agent minimax pieces)]
         [move (cdr minimax_res)])
-    (display minimax_res)
+    (displayln minimax_res)
     (set! game_board (send game_board move_and_get_update (car move) (cadr move)))
    (set! team_turn player_team)))
 
