@@ -1,5 +1,6 @@
 #lang racket
 (require "chess_model.rkt")
+(require "chess_agent.rkt")
 (provide get_pieces)
 (provide get_board)
 (provide user_pos_selected?)
@@ -10,6 +11,7 @@
 (define player_team 'white)
 (define ai_team 'black)
 (define team_turn 'white)
+(define chess_agent (new chess_agent% [team ai_team]))
 (define (get_board) game_board)
 (define (get_pieces) (send game_board get_pieces))
 (define user_selected_pos #f)
@@ -32,6 +34,16 @@
  (if [not (equal? user_selected_pos #f)]
   (begin
    (when [try_move user_selected_pos pos] 
-    (set! team_turn ai_team))
+    (begin 
+     (set! team_turn ai_team)
+     (ai_move chess_agent game_board)))
    (set! user_selected_pos #f))
   (set! user_selected_pos pos)))
+
+(define (ai_move chess_agent pieces)
+ (let* ([minimax_res (send chess_agent minimax pieces)]
+        [move (cdr minimax_res)])
+    (display minimax_res)
+    (set! game_board (send game_board move_and_get_update (car move) (cadr move)))
+   (set! team_turn player_team)))
+

@@ -1,7 +1,5 @@
 #lang racket/gui
-
 (require "chess_game.rkt")
-
 (define window_width 600)
 (define window_height window_width)
 (define cell_width (/ window_width 8))
@@ -81,15 +79,19 @@
 
 (define main_canvas%
  (class canvas%
+  (init new_left_down_callback)
+  (super-new [parent main_frame]
+             [paint-callback canvasdc])
+  (define left_down_callback new_left_down_callback)
   (define/override (on-event event) 
    (when (and (is-a? event mouse-event%) (send event get-left-down))
-    (user_select_pos (list 
+    (left_down_callback (list 
      (quotient (send event get-x) cell_width)
      (quotient (send event get-y) cell_height)))
     (send this on-paint)))
   (super-new)))
-(define main_canvas (new main_canvas% [parent main_frame]
-                                      [paint-callback canvasdc]))
-(send main_canvas set-canvas-background [make-object color% 0 0 0])
+
 (send main_frame show #t)
+
+(define main_canvas (new main_canvas% [new_left_down_callback user_select_pos]))
 (pretty-write (get_pieces))

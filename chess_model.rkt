@@ -116,7 +116,7 @@
      #f)))
 
  (define/public (get_all_piece_positions)
-  (hash-values pieces))
+  (hash-keys pieces))
 
  (define/public (get_legal_moves position)
   (match (send (get_piece position) get_piece_type)
@@ -240,11 +240,11 @@
  (class board_piece% 
   (super-new)
   (define/override (get_piece_type) 'king)
-  (define/override (get_piece_value) 100)))
+  (define/override (get_piece_value) 1000)))
 
 (define queen_piece%
  (class board_piece% 
   (super-new)
   (define/override (get_piece_type) 'queen)
-  (define/override (get_piece_value) 9)))
+  (define/override (get_piece_value) 10)))
 
