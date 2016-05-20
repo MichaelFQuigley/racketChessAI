@@ -59,9 +59,6 @@
          (if (equal? (modulo (+ x y) 2) 0)
              (send dc set-brush brush_white)
              (send dc set-brush brush_black))
-            ;(if (eq? (send dc get-brush) brush_black)
-             ; (send dc set-brush brush_white)
-              ;(send dc set-brush brush_black)))
         (when (this_user_pos_selected? (list x y))
          (send dc set-brush brush_selected))
         (send dc draw-rectangle 
@@ -79,19 +76,18 @@
 
 (define main_canvas%
  (class canvas%
-  (init new_left_down_callback)
+  (init new_user_click_callback)
   (super-new [parent main_frame]
              [paint-callback canvasdc])
-  (define left_down_callback new_left_down_callback)
+  (define user_click_callback new_user_click_callback)
   (define/override (on-event event) 
    (when (and (is-a? event mouse-event%) (send event get-left-down))
-    (left_down_callback (list 
+    (when (user_click_callback (list 
      (quotient (send event get-x) cell_width)
      (quotient (send event get-y) cell_height)))
-    (send this on-paint)))
-  (super-new)))
+     (send this on-paint))))))
 
 (send main_frame show #t)
 
-(define main_canvas (new main_canvas% [new_left_down_callback user_select_pos]))
+(define main_canvas (new main_canvas% [new_user_click_callback user_select_pos]))
 (pretty-write (get_pieces))

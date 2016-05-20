@@ -7,6 +7,7 @@
   (init team)
   (field [agent_team team])
   (define minimax_depth 2)
+  (define epsilon 0.99)
 
   (define (piece_score_heuristic pieces team)
    (- (send pieces get_team_piece_score (get-field agent_team this)) (send pieces get_team_piece_score (opposite_team))))
@@ -20,13 +21,20 @@
      (filter (lambda (pos) (equal? (get-field piece_team (send pieces get_piece pos)) team))
       (send pieces get_all_piece_positions))))
 
+  ;flip_coin will return true with probabilit 'prob'
+  (define (flip_coin prob)
+   (let ([maxi 1000000])
+   (if [>= (* prob maxi) (random maxi)]
+    #t
+    #f)))
+
   (define (max_arg0 listA listB)
-   (if (>= (car listA) (car listB))
+   (if (and (>= (car listA) (car listB)) (flip_coin epsilon))
     listA
     listB))
 
   (define (min_arg0 listA listB)
-   (if (<= (car listA) (car listB))
+   (if (and (<= (car listA) (car listB)) (flip_coin epsilon))
     listA
     listB))
 
@@ -61,7 +69,7 @@
          (new_pos_iter curr_pos (cdr new_pos_list) new_inner_alpha new_temp_v)))))))))))
 
   (define (min_helper pieces curr_depth alpha beta prev_pos next_pos)
-     (let orig_pos_iter ([children (get_all_legal_moves pieces (opposite_team))]
+     (let orig_pos_iter ([children (shuffle (get_all_legal_moves pieces (opposite_team)))]
                          [v (list 1000000  prev_pos next_pos)]
                          [outer_beta beta])
       (if (empty? children)
