@@ -88,7 +88,7 @@
  (define/public (in_check_mate? team)
   (if (in_check? team)
    (let* ([king_pos (get_king_pos team)]
-          [legal_moves (get_king_legal_moves king_pos)]
+          [legal_moves (get_legal_moves king_pos)]
           [filtered_legal_moves (filter 
                                   (lambda (new_pos) (not (would_be_in_check? team king_pos new_pos)))
                                  legal_moves)])
