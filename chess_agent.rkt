@@ -5,14 +5,32 @@
  (class object%
   (super-new)
   (init team)
-  (field [agent_team team])
-  (define minimax_depth 2)
-  (define epsilon 1)
 
+  ;agent team is the team that the agent is on ('black or 'white)
+  (field [agent_team team])
+
+  ;minimax_depth is the ply-depth for minimax
+  (define minimax_depth 2)
+
+  ;epsilon is the probability of choosing the best action at 
+  ;a certain level in the minimax tree
+  ;(as opposed to choosing a suboptimal action)
+  (define epsilon 0.999)
+
+  ;max_v is the max possible value for a node in minimax
+  ;this is useful for checking error conditions
+  (define max_v 1000000)
+
+  ;min_v is the min possible value for a node in minimax
+  (define min_v -1000000)
+
+  ;piece_score_heuristic is the heuristic used when minimax reaches its max search depth
   (define (piece_score_heuristic pieces team)
    (- (send pieces get_team_piece_score (get-field agent_team this)) (send pieces get_team_piece_score (opposite_team))))
 
+  ;opposite_team returns opposing team with respect to chess_agent
   (define (opposite_team) (if (equal? (get-field agent_team this) 'black) 'white 'black))
+
   ;get_all_legal_moves returns (list (list old_pos1 (list new_pos1 ...)) ...)
   (define (get_all_legal_moves pieces team)
     (map  
@@ -21,7 +39,7 @@
      (filter (lambda (pos) (equal? (get-field piece_team (send pieces get_piece pos)) team))
       (send pieces get_all_piece_positions))))
 
-  ;flip_coin will return true with probabilit 'prob'
+  ;flip_coin will return true with probability 'prob'
   (define (flip_coin prob)
    (let ([maxi 1000000])
    (if [>= (* prob maxi) (random maxi)]
@@ -42,7 +60,7 @@
     (if (equal? curr_depth minimax_depth)
      (list (piece_score_heuristic pieces (get-field agent_team this)) prev_pos next_pos)
      (let orig_pos_iter ([children (get_all_legal_moves pieces (get-field agent_team this))]
-                         [v (list -1000000 prev_pos next_pos)]
+                         [v (list min_v prev_pos next_pos)]
                          [outer_alpha alpha])
       (if (empty? children)
        v
@@ -74,7 +92,7 @@
 
   (define (min_helper pieces curr_depth alpha beta prev_pos next_pos)
      (let orig_pos_iter ([children (shuffle (get_all_legal_moves pieces (opposite_team)))]
-                         [v (list 1000000  prev_pos next_pos)]
+                         [v (list max_v prev_pos next_pos)]
                          [outer_beta beta])
       (if (empty? children)
        v
@@ -100,4 +118,4 @@
          (new_pos_iter curr_pos (cdr new_pos_list) new_inner_beta new_temp_v))))))))))
 
   (define/public (minimax pieces)
-    (max_helper pieces 0 -1000000 1000000 `(0 0) `(0 0)))))
+    (max_helper pieces 0 min_v max_v `(0 0) `(0 0)))))

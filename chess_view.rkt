@@ -1,22 +1,28 @@
 #lang racket/gui
 (require "chess_game.rkt")
-(define window_width 600)
-(define window_height window_width)
-(define cell_width (/ window_width 8))
-(define cell_height (/ window_height 8))
+
+(define status_text_height 30)
+(define canvas_width 600)
+(define canvas_height canvas_width)
+(define cell_width (/ canvas_width 8))
+(define cell_height (/ canvas_height 8))
 
 (define main_frame (new frame% 
                [label "Chess"]
-               [width window_width]
-               [height window_height]
+               [width canvas_width]
+               [height (+ canvas_height status_text_height)]
                [style '(no-resize-border)]))
 (define brush_black (new brush% [color (make-object color% 100 100 100)]))
 (define brush_white (new brush% [color (make-object color% 255 255 255)]))
-(define brush_selected1 (new brush% [color (make-object color% 190 119 220)]))
-(define brush_selected2 (new brush% [color (make-object color% 200 169 220)]))
+
+(define brush_ai_selected1 (new brush% [color (make-object color% 255 149 101)]))
+(define brush_ai_selected2 (new brush% [color (make-object color% 255 99 71)]))
+
+(define brush_user_selected1 (new brush% [color (make-object color% 190 119 220)]))
+(define brush_user_selected2 (new brush% [color (make-object color% 200 169 220)]))
 
 (define (bmp_from_file file_name) 
- (let ([bmp (make-object bitmap% (quotient window_width 8) (quotient window_height 8) #f #t)]
+ (let ([bmp (make-object bitmap% (quotient canvas_width 8) (quotient canvas_height 8) #f #t)]
        [in_port (open-input-file file_name)])
   (send bmp load-file in_port 'png/alpha)
   (close-input-port in_port)
@@ -60,10 +66,17 @@
          (if (equal? (modulo (+ x y) 2) 0)
              (send dc set-brush brush_white)
              (send dc set-brush brush_black))
-        (match (this_user_pos_selected_num (list x y))
-         [1 (send dc set-brush brush_selected1)]
-         [2 (send dc set-brush brush_selected2)]
+
+        (match (ai_selected_num (list x y))
+         [1 (send dc set-brush brush_ai_selected1)]
+         [2 (send dc set-brush brush_ai_selected2)]
          [_ #f])
+
+        (match (this_user_pos_selected_num (list x y))
+         [1 (send dc set-brush brush_user_selected1)]
+         [2 (send dc set-brush brush_user_selected2)]
+         [_ #f])
+
         (send dc draw-rectangle 
          (* cell_width x) 
          (* cell_height y) 
@@ -89,9 +102,26 @@
      (quotient (send event get-x) cell_width)
      (quotient (send event get-y) cell_height)))))))
 
+(define status_text (new text-field%
+                     [parent main_frame]
+                     [label ""]
+                     [min-height status_text_height]
+                     [enabled #f]
+                     [init-value "White's turn!"]))
+
 (define (on_ai_move_callback)
  (send main_canvas on-paint)
- (displayln "here"))
+ (displayln "on_ai_move_callback"))
+
+(define (on_user_check_callback)
+ (send status_text set-value "CHECK!")
+ (displayln "on_user_check_callback"))
+
+(define (on_user_check_mate_callback)
+ (send status_text set-field-background (make-object color% 200 0 0))
+ (send status_text set-value "CHECK MATE! YOU LOSE!")
+ (displayln "on_user_check_mate_callback"))
+
 
 (define (on_user_done_callback)
  (send main_canvas on-paint)
@@ -102,9 +132,9 @@
      `[on_ai_move ,on_ai_move_callback]
      `[on_ai_check ,(lambda (_) #f)]
      `[on_ai_check_mate ,(lambda (_) #f)]
-     `[on_user_check ,(lambda (_) #f)]
-     `[on_user_check_mate ,(lambda (_) #f)]
-     `[on_user_done_callback ,on_user_done_callback]
+     `[on_user_check ,on_user_check_callback]
+     `[on_user_check_mate ,on_user_check_mate_callback]
+     `[on_user_done ,on_user_done_callback]
      `[on_stalemate ,(lambda (_) #f)]))
 
 (send main_frame show #t)

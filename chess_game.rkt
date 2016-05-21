@@ -5,6 +5,7 @@
 (provide get_board)
 (provide user_pos_selected?)
 (provide this_user_pos_selected_num)
+(provide ai_selected_num)
 (provide user_select_pos)
 (provide register_callbacks)
 
@@ -58,27 +59,32 @@
        (equal? (length user_selected_pos) 2))
     (begin
      (set! user_selected_pos (list pos))
-     (try_callback 'on_user_done_callback))]
+     (try_callback 'on_user_done))]
   [(equal? (length user_selected_pos) 1)
          (let* ([did_move (try_move (car user_selected_pos) pos)])
           (if did_move 
            (begin 
             (set! team_turn ai_team)
             (set! user_selected_pos (cons pos user_selected_pos))
-            (try_callback 'on_user_done_callback)
+            (try_callback 'on_user_done)
             (ai_move chess_agent game_board))
            (begin 
             (set! user_selected_pos '())
-            (try_callback 'on_user_done_callback))))]
+            (try_callback 'on_user_done))))]
   [else (error "too many positions in user_select_pos")]))
 
 (define (ai_move chess_agent pieces)
  (let* ([minimax_res (send chess_agent minimax pieces)]
         [move (cdr minimax_res)])
     (displayln minimax_res)
+    (set! ai_move_pos move)
     (set! game_board (send game_board move_and_get_update (car move) (cadr move)))
     (set! user_selected_pos '())
     (try_callback 'on_ai_move)
+    (when [send game_board in_check? player_team] 
+     (if [send game_board in_check_mate? player_team]
+      (try_callback 'on_user_check_mate)
+      (try_callback 'on_user_check)))
    (set! team_turn player_team)))
 
 ;register_callbacks
@@ -91,7 +97,7 @@
      `[on_ai_check_mate ,_]
      `[on_user_check ,_]
      `[on_user_check_mate ,_]
-     `[on_user_done_callback ,_]
+     `[on_user_done ,_]
      `[on_stalemate ,_])
         (set! registered_callbacks (make-immutable-hash callbacks))]
  [_ (error "Invalid callback format. 
@@ -108,4 +114,4 @@
  (let ([callback (get_callback callback_name)])
      (if [not (equal? callback #f)]
       (begin ((car callback)) #t)
-      #f)))
+      (begin (displayln "Callback invocation failed") #f))))

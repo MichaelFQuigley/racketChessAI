@@ -79,6 +79,22 @@
  (define/public (has_piece? position)
   (hash-has-key? pieces position))
 
+ (define (get_king_pos team)
+  (if (equal? team 'white) white_king_pos black_king_pos))
+
+ (define/public (would_be_in_check? team old_pos new_pos)
+  (send (move_and_get_update old_pos new_pos) in_check? team))
+
+ (define/public (in_check_mate? team)
+  (if (in_check? team)
+   (let* ([king_pos (get_king_pos team)]
+          [legal_moves (get_king_legal_moves king_pos)]
+          [filtered_legal_moves (filter 
+                                  (lambda (new_pos) (not (would_be_in_check? team king_pos new_pos)))
+                                 legal_moves)])
+        (if [empty? filtered_legal_moves] #t #f))
+   #f))
+
  (define/public (in_check? team)
   (define (is_threat_piece? pos test_type) 
    (if (has_piece? pos)
@@ -92,7 +108,7 @@
       [(empty? legal_moves) #f]
       [(is_threat_piece? (car legal_moves) test_type) #t]
       [else (threat_from_type? king_pos test_type (cdr legal_moves))]))
-  (let* ([king_pos (if (equal? team 'white) white_king_pos black_king_pos)]
+  (let* ([king_pos (get_king_pos team)]
          [vert_legals (get_vert_legal_moves king_pos)]
          [diag_legals (get_diag_legal_moves king_pos)]
          [pawn_legals (get_pawn_legal_moves king_pos)]
