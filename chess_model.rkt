@@ -144,9 +144,12 @@
     (append 
      (if [not (has_piece? (list (car position) y_pos))]
       (if [and (not (has_piece? (list (car position) y_pos2)))
-            (or (equal? (cadr position) 6) (equal? (cadr position) 1))]
-       (list (list (car position) y_pos) (list (car position) y_pos2))
-      (list (list (car position) y_pos)))
+            (or (and (equal? 'white (get-field piece_team piece))
+                     (equal? (cadr position) 6)) 
+                (and (equal? 'black (get-field piece_team piece))
+                     (equal? (cadr position) 1)))]
+       `((,(car position) ,y_pos) (,(car position) ,y_pos2))
+      `((,(car position) ,y_pos)))
       '())
      (if [and (has_piece? diag_pos1)
                (send piece not_my_team? (get_piece diag_pos1))]

@@ -7,7 +7,7 @@
   (init team)
   (field [agent_team team])
   (define minimax_depth 2)
-  (define epsilon 0.99)
+  (define epsilon 1)
 
   (define (piece_score_heuristic pieces team)
    (- (send pieces get_team_piece_score (get-field agent_team this)) (send pieces get_team_piece_score (opposite_team))))
@@ -62,7 +62,11 @@
                            beta
                            prev_pos
                            next_pos)]
-               [new_temp_v (max_arg0 temp_v (if (equal? curr_depth 0) (list (car min_helper_res) curr_pos (car new_pos_list)) (list (car min_helper_res) prev_pos next_pos)))]
+               [new_temp_v (max_arg0 
+                             temp_v 
+                             (if (equal? curr_depth 0) 
+                              (list (car min_helper_res) curr_pos (car new_pos_list)) 
+                              (list (car min_helper_res) prev_pos next_pos)))]
                [new_inner_alpha (max (car new_temp_v) inner_alpha)])
          (if (<= beta new_inner_alpha)
           new_temp_v
