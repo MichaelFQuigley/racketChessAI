@@ -9,7 +9,7 @@
                    `((0 0) ,(new rook_piece%   [team 'black]))
                    `((1 0) ,(new knight_piece% [team 'black]))
                    `((2 0) ,(new bishop_piece% [team 'black]))
-                   `((3 0) ,(new queen_piece%  [team 'black]))
+                   ;`((3 0) ,(new queen_piece%  [team 'black]))
                    `((4 0) ,(new king_piece%   [team 'black]))
                    `((5 0) ,(new bishop_piece% [team 'black]))
                    `((6 0) ,(new knight_piece% [team 'black]))
@@ -86,14 +86,7 @@
   (send (move_and_get_update old_pos new_pos) in_check? team))
 
  (define/public (in_check_mate? team)
-  (if (in_check? team)
-   (let* ([king_pos (get_king_pos team)]
-          [legal_moves (get_legal_moves king_pos)]
-          [filtered_legal_moves (filter 
-                                  (lambda (new_pos) (not (would_be_in_check? team king_pos new_pos)))
-                                 legal_moves)])
-        (if [empty? filtered_legal_moves] #t #f))
-   #f))
+  (and (not (has_moves_not_in_check? team)) (in_check? team)))
 
  (define/public (in_check? team)
   (define (is_threat_piece? pos test_type) 
