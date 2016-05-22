@@ -107,13 +107,23 @@
                      [label ""]
                      [min-height status_text_height]
                      [enabled #f]
-                     [init-value "Your turn!"]))
+                     [init-value ""]))
 
 (define (on_ai_move_callback)
  (send main_canvas on-paint)
  (send status_text set-field-background (make-object color% 255 255 255))
- (send status_text set-value "Your turn!")
+ (send status_text set-value "")
  (displayln "on_ai_move_callback"))
+
+(define (on_ai_check_callback)
+ (displayln "on_ai_check_callback")
+ (send status_text set-field-background (make-object color% 100 255 100))
+ (send status_text set-value "Computer in CHECK!"))
+
+(define (on_ai_check_mate_callback)
+ (displayln "on_ai_check_mate_callback")
+ (send status_text set-field-background (make-object color% 0 200 0))
+ (send status_text set-value "COMPUTER IN CHECK MATE! YOU WON!"))
 
 (define (on_user_check_callback)
  (send status_text set-field-background (make-object color% 255 100 100))
@@ -137,8 +147,8 @@
 (register_callbacks
  (list
      `[on_ai_move ,on_ai_move_callback]
-     `[on_ai_check ,(lambda _ #f)]
-     `[on_ai_check_mate ,(lambda _ #f)]
+     `[on_ai_check ,on_ai_check_callback]
+     `[on_ai_check_mate ,on_ai_check_mate_callback]
      `[on_user_check ,on_user_check_callback]
      `[on_user_check_mate ,on_user_check_mate_callback]
      `[on_user_move ,(lambda _ #f)]

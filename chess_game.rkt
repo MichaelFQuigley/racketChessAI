@@ -69,7 +69,13 @@
             (set! user_selected_pos (cons pos user_selected_pos))
             (try_callback 'on_user_select)
             (try_callback 'on_user_move)
-            (ai_move chess_agent game_board))
+            (cond
+             [(send game_board in_check_mate? ai_team) (try_callback 'on_ai_check_mate)]
+             [(send game_board in_check?      ai_team) (begin 
+                                                             (try_callback 'on_ai_check) 
+                                                             (ai_move chess_agent game_board))]
+             [(send game_board in_stalemate?  ai_team) (try_callback 'on_stalemate)]
+             [else (ai_move chess_agent game_board)]))
            (begin 
             (set! user_selected_pos '())
             (try_callback 'on_user_select))))]

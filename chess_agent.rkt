@@ -10,12 +10,12 @@
   (field [agent_team team])
 
   ;minimax_depth is the ply-depth for minimax
-  (define minimax_depth 2)
+  (define minimax_depth 1)
 
   ;epsilon is the probability of choosing the best action at 
   ;a certain level in the minimax tree
   ;(as opposed to choosing a suboptimal action)
-  (define epsilon 0.999)
+  (define epsilon 1)
 
   ;max_v is the max possible value for a node in minimax
   ;this is useful for checking error conditions
@@ -51,7 +51,9 @@
   (define (max_helper pieces curr_depth alpha beta prev_pos next_pos)
     (if (equal? curr_depth minimax_depth)
      (list (piece_score_heuristic pieces (get-field agent_team this)) prev_pos next_pos)
-     (let orig_pos_iter ([children (send pieces filter_out_moves_in_check (get-field agent_team this))]
+     (let orig_pos_iter ([children (shuffle (if (equal? curr_depth 0)
+                                    (send pieces filter_out_moves_in_check (get-field agent_team this))
+                                    (send pieces get_all_legal_moves (get-field agent_team this))))]
                          [v (list min_v prev_pos next_pos)]
                          [outer_alpha alpha])
       (if (empty? children)
@@ -60,7 +62,7 @@
       (if (empty? children_tup)
        v
       (let new_pos_iter ([curr_pos      (car children_tup)]
-                         [new_pos_list  (shuffle (cadr children_tup))]
+                         [new_pos_list  (cadr children_tup)]
                          [inner_alpha   outer_alpha]
                          [temp_v v])
        (if [empty? new_pos_list]
@@ -83,7 +85,7 @@
          (new_pos_iter curr_pos (cdr new_pos_list) new_inner_alpha new_temp_v)))))))))))
 
   (define (min_helper pieces curr_depth alpha beta prev_pos next_pos)
-     (let orig_pos_iter ([children (shuffle (send pieces filter_out_moves_in_check (opposite_team)))]
+     (let orig_pos_iter ([children (send pieces get_all_legal_moves (opposite_team))]
                          [v (list max_v prev_pos next_pos)]
                          [outer_beta beta])
       (if (empty? children)
