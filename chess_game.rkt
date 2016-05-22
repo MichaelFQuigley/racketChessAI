@@ -49,7 +49,8 @@
       (send game_board is_legal_move? old_pos new_pos)]
    (let ([new_board (send game_board move_and_get_update old_pos new_pos)])
     (if [not (send new_board in_check? team_turn)]
-     (begin (set! game_board new_board) #t)
+     (begin 
+     (set! game_board new_board) #t)
      #f))
     #f))
 
@@ -59,18 +60,19 @@
        (equal? (length user_selected_pos) 2))
     (begin
      (set! user_selected_pos (list pos))
-     (try_callback 'on_user_done))]
+     (try_callback 'on_user_select))]
   [(equal? (length user_selected_pos) 1)
          (let* ([did_move (try_move (car user_selected_pos) pos)])
           (if did_move 
            (begin 
             (set! team_turn ai_team)
             (set! user_selected_pos (cons pos user_selected_pos))
-            (try_callback 'on_user_done)
+            (try_callback 'on_user_select)
+            (try_callback 'on_user_move)
             (ai_move chess_agent game_board))
            (begin 
             (set! user_selected_pos '())
-            (try_callback 'on_user_done))))]
+            (try_callback 'on_user_select))))]
   [else (error "too many positions in user_select_pos")]))
 
 (define (ai_move chess_agent pieces)
@@ -81,10 +83,11 @@
     (set! game_board (send game_board move_and_get_update (car move) (cadr move)))
     (set! user_selected_pos '())
     (try_callback 'on_ai_move)
-    (when [send game_board in_check? player_team] 
-     (if [send game_board in_check_mate? player_team]
-      (try_callback 'on_user_check_mate)
-      (try_callback 'on_user_check)))
+    (cond
+     [(send game_board in_check_mate? player_team) (try_callback 'on_user_check_mate)]
+     [(send game_board in_check?      player_team) (try_callback 'on_user_check)]
+     [(send game_board in_stalemate?  player_team) (try_callback 'on_stalemate)]
+     [else #f])
    (set! team_turn player_team)))
 
 ;register_callbacks
@@ -97,7 +100,8 @@
      `[on_ai_check_mate ,_]
      `[on_user_check ,_]
      `[on_user_check_mate ,_]
-     `[on_user_done ,_]
+     `[on_user_move ,_]
+     `[on_user_select ,_]
      `[on_stalemate ,_])
         (set! registered_callbacks (make-immutable-hash callbacks))]
  [_ (error "Invalid callback format. 

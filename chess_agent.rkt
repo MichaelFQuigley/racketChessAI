@@ -31,14 +31,6 @@
   ;opposite_team returns opposing team with respect to chess_agent
   (define (opposite_team) (if (equal? (get-field agent_team this) 'black) 'white 'black))
 
-  ;get_all_legal_moves returns (list (list old_pos1 (list new_pos1 ...)) ...)
-  (define (get_all_legal_moves pieces team)
-    (map  
-     (lambda (position)
-      (list position (send pieces get_legal_moves position)))
-     (filter (lambda (pos) (equal? (get-field piece_team (send pieces get_piece pos)) team))
-      (send pieces get_all_piece_positions))))
-
   ;flip_coin will return true with probability 'prob'
   (define (flip_coin prob)
    (let ([maxi 1000000])
@@ -59,7 +51,7 @@
   (define (max_helper pieces curr_depth alpha beta prev_pos next_pos)
     (if (equal? curr_depth minimax_depth)
      (list (piece_score_heuristic pieces (get-field agent_team this)) prev_pos next_pos)
-     (let orig_pos_iter ([children (get_all_legal_moves pieces (get-field agent_team this))]
+     (let orig_pos_iter ([children (send pieces filter_out_moves_in_check (get-field agent_team this))]
                          [v (list min_v prev_pos next_pos)]
                          [outer_alpha alpha])
       (if (empty? children)
@@ -91,7 +83,7 @@
          (new_pos_iter curr_pos (cdr new_pos_list) new_inner_alpha new_temp_v)))))))))))
 
   (define (min_helper pieces curr_depth alpha beta prev_pos next_pos)
-     (let orig_pos_iter ([children (shuffle (get_all_legal_moves pieces (opposite_team)))]
+     (let orig_pos_iter ([children (shuffle (send pieces filter_out_moves_in_check (opposite_team)))]
                          [v (list max_v prev_pos next_pos)]
                          [outer_beta beta])
       (if (empty? children)
@@ -118,4 +110,4 @@
          (new_pos_iter curr_pos (cdr new_pos_list) new_inner_beta new_temp_v))))))))))
 
   (define/public (minimax pieces)
-    (max_helper pieces 0 min_v max_v `(0 0) `(0 0)))))
+    (max_helper pieces 0 min_v max_v `() `()))))

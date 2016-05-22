@@ -131,8 +131,42 @@
      (find_move (cdr legal_moves)))
      #f)))
 
- (define/public (get_all_piece_positions)
+ (define (get_all_piece_positions)
   (hash-keys pieces))
+
+ (define/public (in_stalemate? team)
+  (not (or (in_check? team) (has_moves_not_in_check? team))))
+
+ ;has_legal_moves returns #t if there are any legal moves for the player
+ ;corresponding to 'team'
+ (define (has_moves_not_in_check? team)
+  (if [empty? (filter 
+                (lambda (el)
+                 (not (empty? (cadr el))))
+                (filter_out_moves_in_check team))]
+    #f #t))
+
+  ;get_all_legal_moves returns (list (list old_pos1 (list new_pos1 ...)) ...)
+ (define/public (get_all_legal_moves team)
+   (map  
+    (lambda (position)
+     (list position (get_legal_moves position)))
+    (filter (lambda (pos) (equal? (get-field piece_team (get_piece pos)) team))
+     (get_all_piece_positions))))
+
+ ;filter_out_moves_in_check has the same format as get_all_legal_moves
+ ;except that moves that would put 'team' in check are removed.
+ (define/public (filter_out_moves_in_check team)
+  (let ([unfiltered_moved (get_all_legal_moves team)])
+   (map (lambda (out_el)
+         (list
+          (car out_el)
+          (filter 
+           (lambda (inner_el)
+            (if (would_be_in_check? team (car out_el) inner_el)
+             #f #t))
+           (cadr out_el))))
+    unfiltered_moved)))
 
  (define/public (get_legal_moves position)
   (match (send (get_piece position) get_piece_type)

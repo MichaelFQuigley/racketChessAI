@@ -107,14 +107,17 @@
                      [label ""]
                      [min-height status_text_height]
                      [enabled #f]
-                     [init-value "White's turn!"]))
+                     [init-value "Your turn!"]))
 
 (define (on_ai_move_callback)
  (send main_canvas on-paint)
+ (send status_text set-field-background (make-object color% 255 255 255))
+ (send status_text set-value "Your turn!")
  (displayln "on_ai_move_callback"))
 
 (define (on_user_check_callback)
- (send status_text set-value "CHECK!")
+ (send status_text set-field-background (make-object color% 255 100 100))
+ (send status_text set-value "You're in CHECK!")
  (displayln "on_user_check_callback"))
 
 (define (on_user_check_mate_callback)
@@ -122,20 +125,25 @@
  (send status_text set-value "CHECK MATE! YOU LOSE!")
  (displayln "on_user_check_mate_callback"))
 
-
-(define (on_user_done_callback)
+(define (on_user_select_callback)
  (send main_canvas on-paint)
- (displayln "on_user_done_callback"))
+ (displayln "on_user_select_callback"))
+
+(define (on_stalemate_callback)
+ (displayln "on_stalemate_callback")
+ (send status_text set-field-background (make-object color% 200 0 0))
+ (send status_text set-value "STALEMATE!"))
 
 (register_callbacks
  (list
      `[on_ai_move ,on_ai_move_callback]
-     `[on_ai_check ,(lambda (_) #f)]
-     `[on_ai_check_mate ,(lambda (_) #f)]
+     `[on_ai_check ,(lambda _ #f)]
+     `[on_ai_check_mate ,(lambda _ #f)]
      `[on_user_check ,on_user_check_callback]
      `[on_user_check_mate ,on_user_check_mate_callback]
-     `[on_user_done ,on_user_done_callback]
-     `[on_stalemate ,(lambda (_) #f)]))
+     `[on_user_move ,(lambda _ #f)]
+     `[on_user_select ,on_user_select_callback]
+     `[on_stalemate ,on_stalemate_callback]))
 
 (send main_frame show #t)
 
