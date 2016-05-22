@@ -9,7 +9,7 @@
                    `((0 0) ,(new rook_piece%   [team 'black]))
                    `((1 0) ,(new knight_piece% [team 'black]))
                    `((2 0) ,(new bishop_piece% [team 'black]))
-                   ;`((3 0) ,(new queen_piece%  [team 'black]))
+                   `((3 0) ,(new queen_piece%  [team 'black]))
                    `((4 0) ,(new king_piece%   [team 'black]))
                    `((5 0) ,(new bishop_piece% [team 'black]))
                    `((6 0) ,(new knight_piece% [team 'black]))
