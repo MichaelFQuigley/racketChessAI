@@ -16,3 +16,4 @@ cd src && racket chess_view.rkt
 -Promote pawns that cross the board  
 -Support castling  
 -Support en passant capture  
+-A reset button
