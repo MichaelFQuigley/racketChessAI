@@ -12,6 +12,7 @@
                [width canvas_width]
                [height (+ canvas_height status_text_height)]
                [style '(no-resize-border)]))
+
 (define brush_black (new brush% [color (make-object color% 100 100 100)]))
 (define brush_white (new brush% [color (make-object color% 255 255 255)]))
 
@@ -22,24 +23,24 @@
 (define brush_user_selected2 (new brush% [color (make-object color% 200 169 220)]))
 
 (define (bmp_from_file file_name) 
- (let ([bmp (make-object bitmap% (quotient canvas_width 8) (quotient canvas_height 8) #f #t)]
+ (let ([bmp (make-object bitmap% cell_width cell_height #f #t)]
        [in_port (open-input-file file_name)])
   (send bmp load-file in_port 'png/alpha)
   (close-input-port in_port)
   bmp))
 
-(define white_pawn_bmp (bmp_from_file  "images/white_pawn.png"))
-(define black_pawn_bmp (bmp_from_file  "images/black_pawn.png"))
-(define white_bishop_bmp (bmp_from_file  "images/white_bishop.png"))
-(define black_bishop_bmp (bmp_from_file "images/black_bishop.png"))
-(define white_rook_bmp (bmp_from_file  "images/white_rook.png"))
-(define black_rook_bmp (bmp_from_file  "images/black_rook.png"))
-(define white_king_bmp (bmp_from_file  "images/white_king.png"))
-(define black_king_bmp (bmp_from_file  "images/black_king.png"))
-(define white_queen_bmp (bmp_from_file  "images/white_queen.png"))
-(define black_queen_bmp (bmp_from_file  "images/black_queen.png"))
-(define white_knight_bmp (bmp_from_file  "images/white_knight.png"))
-(define black_knight_bmp (bmp_from_file  "images/black_knight.png"))
+(define white_pawn_bmp   (bmp_from_file  "../images/white_pawn.png"))
+(define black_pawn_bmp   (bmp_from_file  "../images/black_pawn.png"))
+(define white_bishop_bmp (bmp_from_file  "../images/white_bishop.png"))
+(define black_bishop_bmp (bmp_from_file "../images/black_bishop.png"))
+(define white_rook_bmp   (bmp_from_file  "../images/white_rook.png"))
+(define black_rook_bmp   (bmp_from_file  "../images/black_rook.png"))
+(define white_king_bmp   (bmp_from_file  "../images/white_king.png"))
+(define black_king_bmp   (bmp_from_file  "../images/black_king.png"))
+(define white_queen_bmp  (bmp_from_file  "../images/white_queen.png"))
+(define black_queen_bmp  (bmp_from_file  "../images/black_queen.png"))
+(define white_knight_bmp (bmp_from_file  "../images/white_knight.png"))
+(define black_knight_bmp (bmp_from_file  "../images/black_knight.png"))
 
 (define (get_piece_bmp position)
  (let* ([piece (send (get_board) get_piece position)]
@@ -63,27 +64,34 @@
      (let draw_cells ([x 0]
                       [y 0]
                       [cell_num 0])
+
          (if (equal? (modulo (+ x y) 2) 0)
              (send dc set-brush brush_white)
              (send dc set-brush brush_black))
 
+        ;ai agent selection highlighing
         (match (ai_selected_num (list x y))
          [1 (send dc set-brush brush_ai_selected1)]
          [2 (send dc set-brush brush_ai_selected2)]
          [_ #f])
 
+        ;user selection highlighing
         (match (this_user_pos_selected_num (list x y))
          [1 (send dc set-brush brush_user_selected1)]
          [2 (send dc set-brush brush_user_selected2)]
          [_ #f])
 
+        ;grid cells
         (send dc draw-rectangle 
          (* cell_width x) 
          (* cell_height y) 
          cell_width 
          cell_height)
+
+        ;chess pieces
         (when (send (get_board) has_piece? (list x y))
          (send dc draw-bitmap (get_piece_bmp (list x y)) (* cell_width x) (* cell_height y) 'opaque))
+
         (if (and [>= (+ x 1) 8] [>= (+ y 1) 8])
              0
              (draw_cells (modulo (+ cell_num 1) 8) 
@@ -157,5 +165,5 @@
 
 (send main_frame show #t)
 
-(define main_canvas (new main_canvas% [new_user_click_callback user_select_pos]))
+(define main_canvas (new main_canvas% [new_user_click_callback user_click_pos]))
 (pretty-write (get_pieces))

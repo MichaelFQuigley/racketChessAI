@@ -3,23 +3,30 @@
 (require "chess_agent.rkt")
 (provide get_pieces)
 (provide get_board)
-(provide user_pos_selected?)
 (provide this_user_pos_selected_num)
 (provide ai_selected_num)
-(provide user_select_pos)
+(provide user_click_pos)
 (provide register_callbacks)
 
 (define game_board (new board_pieces%))
 (define player_team 'white)
 (define ai_team 'black)
+;team_turn is the current team's turn in the game
 (define team_turn 'white)
 (define chess_agent (new chess_agent% [team ai_team]))
 (define (get_board) game_board)
 (define (get_pieces) (send game_board get_pieces))
+
+;user_selected_pos/ai_move_pos can be a list of at most two positions on the
+;board that the user/ai agent selected. The cadr of the list is the first
+;selected position, and the car is the second selected position.
 (define user_selected_pos '())
 (define ai_move_pos '())
-(define (user_pos_selected?) user_selected_pos)
 
+;ai_selected_num 
+;returns 0 if position isn't in the ai_move_pos list
+;returns 1 if provided position is first selected pos
+;returns 2 if provided position is second selected pos
 (define (ai_selected_num pos)
  (cond
   [(equal? (length ai_move_pos) 0) 0]
@@ -27,6 +34,10 @@
   [(equal? (car ai_move_pos) pos) 2]
   [else 0]))
 
+;this_user_pos_selected_num
+;returns 0 if position isn't in the ai_move_pos list
+;returns 1 if provided position is first selected pos
+;returns 2 if provided position is second selected pos
 (define (this_user_pos_selected_num pos) 
  (cond
   [(equal? (length user_selected_pos) 0) 0]
@@ -39,12 +50,15 @@
     [(equal? (cadr user_selected_pos) pos) 1] 
     [else 0])]))
 
+;registered_callbacks represents all registered callbacks
+;that the chess_view provides
 (define registered_callbacks null)
 
-;try_move: returns true if move was successfully made
+;try_move: returns true if user move was successfully made
 (define (try_move old_pos new_pos)
  (if [and 
       (send game_board has_piece? old_pos)
+      (not (equal? (get-field piece_team (send game_board get_piece old_pos)) ai_team))
       (not (equal? old_pos new_pos))
       (send game_board is_legal_move? old_pos new_pos)]
    (let ([new_board (send game_board move_and_get_update old_pos new_pos)])
@@ -54,8 +68,10 @@
      #f))
     #f))
 
-(define (user_select_pos pos)
+;user_click_pos called when user clicks a position on chess grid
+(define (user_click_pos pos)
  (cond
+  [(equal? team_turn ai_team) #f]
   [(or (equal? (length user_selected_pos) 0) 
        (equal? (length user_selected_pos) 2))
     (begin
@@ -97,7 +113,7 @@
    (set! team_turn player_team)))
 
 ;register_callbacks
-;callbacks should be of the form (list ['callback_name callback] ...)
+;callbacks should be of the form (list ['callback_name callback_function] ...)
 (define (register_callbacks callbacks)
  (match callbacks
  [(list

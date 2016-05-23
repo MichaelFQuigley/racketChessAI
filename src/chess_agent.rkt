@@ -10,7 +10,7 @@
   (field [agent_team team])
 
   ;minimax_depth is the ply-depth for minimax
-  (define minimax_depth 1)
+  (define minimax_depth 2)
 
   ;epsilon is the probability of choosing the best action at 
   ;a certain level in the minimax tree
@@ -26,7 +26,10 @@
 
   ;piece_score_heuristic is the heuristic used when minimax reaches its max search depth
   (define (piece_score_heuristic pieces team)
-   (- (send pieces get_team_piece_score (get-field agent_team this)) (send pieces get_team_piece_score (opposite_team))))
+    (- 
+     (send pieces get_team_piece_score (get-field agent_team this))
+     (send pieces get_team_piece_score (opposite_team))))
+
 
   ;opposite_team returns opposing team with respect to chess_agent
   (define (opposite_team) (if (equal? (get-field agent_team this) 'black) 'white 'black))
@@ -39,12 +42,12 @@
     #f)))
 
   (define (max_arg0 listA listB)
-   (if (and (>= (car listA) (car listB)) (flip_coin epsilon))
+   (if (>= (car listA) (car listB))
     listA
     listB))
 
   (define (min_arg0 listA listB)
-   (if (and (<= (car listA) (car listB)) (flip_coin epsilon))
+   (if (<= (car listA) (car listB))
     listA
     listB))
 
@@ -74,15 +77,15 @@
                            beta
                            prev_pos
                            next_pos)]
-               [new_temp_v (max_arg0 
+               [temp_v (max_arg0 
                              temp_v 
                              (if (equal? curr_depth 0) 
                               (list (car min_helper_res) curr_pos (car new_pos_list)) 
                               (list (car min_helper_res) prev_pos next_pos)))]
-               [new_inner_alpha (max (car new_temp_v) inner_alpha)])
-         (if (<= beta new_inner_alpha)
-          new_temp_v
-         (new_pos_iter curr_pos (cdr new_pos_list) new_inner_alpha new_temp_v)))))))))))
+               [inner_alpha (max (car temp_v) inner_alpha)])
+         (if (<= beta inner_alpha)
+          temp_v
+         (new_pos_iter curr_pos (cdr new_pos_list) inner_alpha temp_v)))))))))))
 
   (define (min_helper pieces curr_depth alpha beta prev_pos next_pos)
      (let orig_pos_iter ([children (send pieces get_all_legal_moves (opposite_team))]
@@ -99,17 +102,17 @@
                          [temp_v v])
        (if (empty? new_pos_list)
         (orig_pos_iter (cdr children) temp_v inner_beta)
-        (let* ([new_temp_v (min_arg0 temp_v (max_helper 
+        (let* ([temp_v (min_arg0 temp_v (max_helper 
                            (send pieces move_and_get_update curr_pos (car new_pos_list))
                            (add1 curr_depth)
                            alpha
                            inner_beta
                            prev_pos
                            next_pos))]
-               [new_inner_beta (min (car new_temp_v) inner_beta)])
-         (if (<= new_inner_beta alpha)
-          new_temp_v
-         (new_pos_iter curr_pos (cdr new_pos_list) new_inner_beta new_temp_v))))))))))
+               [inner_beta (min (car temp_v) inner_beta)])
+         (if (<= inner_beta alpha)
+          temp_v
+         (new_pos_iter curr_pos (cdr new_pos_list) inner_beta temp_v))))))))))
 
   (define/public (minimax pieces)
     (max_helper pieces 0 min_v max_v `() `()))))
