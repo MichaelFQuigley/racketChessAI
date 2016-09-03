@@ -261,14 +261,14 @@
   (super-new)
   (inherit not_my_team?)
   (define/override (get_piece_type) 'pawn)
-  (define/override (get_piece_value) 20)))
+  (define/override (get_piece_value) 15)))
 
 (define bishop_piece%
  (class board_piece% 
   (super-new)
   (inherit not_my_team?)
   (define/override (get_piece_type) 'bishop)
-  (define/override (get_piece_value) 30)))
+  (define/override (get_piece_value) 35)))
 
 (define knight_piece%
  (class board_piece% 

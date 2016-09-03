@@ -60,23 +60,36 @@
   [`(white knight) white_knight_bmp]
   [`(black knight) black_knight_bmp])))
 
+;translate_pos: Flips the board position if the player's team is black.
+;This is needed since normally, the board has the origin centered in the top
+;left. To make the bottom pieces black from the perspective of the human
+;player, the positions that are incoming and being drawn need to be flipped.
+(define (translate_pos pos)
+ (if [equal? player_team 'white] 
+  pos
+  (list (- 7 (car pos)) (- 7 (cadr pos)))))
+
+;canvasdc: Draws the chess board.
 (define (canvasdc canvas dc) 
      (let draw_cells ([x 0]
                       [y 0]
                       [cell_num 0])
-
-         (if (equal? (modulo (+ x y) 2) 0)
+        ;flip coords if player is on black team
+        (let* ([pos (translate_pos (list x y))]
+               [trans_x (car pos)]
+               [trans_y (cadr pos)])
+         (if [equal? (modulo (+ x y) 2) 0]
              (send dc set-brush brush_white)
              (send dc set-brush brush_black))
 
         ;ai agent selection highlighing
-        (match (ai_selected_num (list x y))
+        (match (ai_selected_num (list trans_x trans_y))
          [1 (send dc set-brush brush_ai_selected1)]
          [2 (send dc set-brush brush_ai_selected2)]
          [_ #f])
 
         ;user selection highlighing
-        (match (this_user_pos_selected_num (list x y))
+        (match (this_user_pos_selected_num (list trans_x trans_y))
          [1 (send dc set-brush brush_user_selected1)]
          [2 (send dc set-brush brush_user_selected2)]
          [_ #f])
@@ -87,10 +100,9 @@
          (* cell_height y) 
          cell_width 
          cell_height)
-
         ;chess pieces
-        (when (send (get_board) has_piece? (list x y))
-         (send dc draw-bitmap (get_piece_bmp (list x y)) (* cell_width x) (* cell_height y) 'opaque))
+        (when (send (get_board) has_piece? (list trans_x trans_y))
+         (send dc draw-bitmap (get_piece_bmp (list trans_x trans_y)) (* cell_width x) (* cell_height y) 'opaque)))
 
         (if (and [>= (+ x 1) 8] [>= (+ y 1) 8])
              0
@@ -105,7 +117,7 @@
              [paint-callback canvasdc])
   (define user_click_callback new_user_click_callback)
   (define/override (on-event event) 
-   (when (and (is-a? event mouse-event%) (send event get-left-down))
+   (when [and (is-a? event mouse-event%) (send event get-left-down)]
     (user_click_callback (list 
      (quotient (send event get-x) cell_width)
      (quotient (send event get-y) cell_height)))))))
@@ -152,6 +164,12 @@
  (send status_text set-field-background (make-object color% 200 0 0))
  (send status_text set-value "STALEMATE!"))
 
+(define (user_click_from_view pos)
+ (user_click_pos (translate_pos pos)))
+
+(define main_canvas (new main_canvas% [new_user_click_callback user_click_from_view]))
+(pretty-write (get_pieces))
+
 (register_callbacks
  (list
      `[on_ai_move ,on_ai_move_callback]
@@ -164,6 +182,8 @@
      `[on_stalemate ,on_stalemate_callback]))
 
 (send main_frame show #t)
+;white goes first, so when player is on black team, ai moves first
+(when [equal? player_team 'black]
+(ai_move (get_board)))
 
-(define main_canvas (new main_canvas% [new_user_click_callback user_click_pos]))
-(pretty-write (get_pieces))
+

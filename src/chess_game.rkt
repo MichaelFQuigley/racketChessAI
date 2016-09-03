@@ -2,21 +2,27 @@
 (require "chess_model.rkt")
 (require "chess_agent.rkt")
 (provide get_pieces)
+(provide chess_agent)
+(provide ai_move)
 (provide get_board)
 (provide this_user_pos_selected_num)
+(provide player_team)
 (provide ai_selected_num)
 (provide user_click_pos)
 (provide register_callbacks)
 
 (define game_board (new board_pieces%))
 (define player_team 'white)
-(define ai_team 'black)
+;ai_team is opposite of player team
+(define ai_team 
+ (if [equal? player_team 'white]
+  'black
+  'white))
 ;team_turn is the current team's turn in the game
 (define team_turn 'white)
 (define chess_agent (new chess_agent% [team ai_team]))
 (define (get_board) game_board)
 (define (get_pieces) (send game_board get_pieces))
-
 ;user_selected_pos/ai_move_pos can be a list of at most two positions on the
 ;board that the user/ai agent selected. The cadr of the list is the first
 ;selected position, and the car is the second selected position.
@@ -70,34 +76,35 @@
 
 ;user_click_pos called when user clicks a position on chess grid
 (define (user_click_pos pos)
- (cond
-  [(equal? team_turn ai_team) #f]
-  [(or (equal? (length user_selected_pos) 0) 
-       (equal? (length user_selected_pos) 2))
-    (begin
-     (set! user_selected_pos (list pos))
-     (try_callback 'on_user_select))]
-  [(equal? (length user_selected_pos) 1)
-         (let* ([did_move (try_move (car user_selected_pos) pos)])
-          (if did_move 
-           (begin 
-            (set! team_turn ai_team)
-            (set! user_selected_pos (cons pos user_selected_pos))
-            (try_callback 'on_user_select)
-            (try_callback 'on_user_move)
-            (cond
-             [(send game_board in_check_mate? ai_team) (try_callback 'on_ai_check_mate)]
-             [(send game_board in_check?      ai_team) (begin 
-                                                             (try_callback 'on_ai_check) 
-                                                             (ai_move chess_agent game_board))]
-             [(send game_board in_stalemate?  ai_team) (try_callback 'on_stalemate)]
-             [else (ai_move chess_agent game_board)]))
-           (begin 
-            (set! user_selected_pos '())
-            (try_callback 'on_user_select))))]
-  [else (error "too many positions in user_select_pos")]))
+  (display pos)
+  (cond
+   [(equal? team_turn ai_team) #f]
+   [(or (equal? (length user_selected_pos) 0) 
+        (equal? (length user_selected_pos) 2))
+     (begin
+      (set! user_selected_pos (list pos))
+      (try_callback 'on_user_select))]
+   [(equal? (length user_selected_pos) 1)
+          (let* ([did_move (try_move (car user_selected_pos) pos)])
+           (if did_move 
+            (begin 
+             (set! team_turn ai_team)
+             (set! user_selected_pos (cons pos user_selected_pos))
+             (try_callback 'on_user_select)
+             (try_callback 'on_user_move)
+             (cond
+              [(send game_board in_check_mate? ai_team) (try_callback 'on_ai_check_mate)]
+              [(send game_board in_check?      ai_team) (begin 
+                                                              (try_callback 'on_ai_check) 
+                                                              (ai_move game_board))]
+              [(send game_board in_stalemate?  ai_team) (try_callback 'on_stalemate)]
+              [else (ai_move game_board)]))
+            (begin 
+             (set! user_selected_pos '())
+             (try_callback 'on_user_select))))]
+   [else (error "too many positions in user_select_pos")]))
 
-(define (ai_move chess_agent pieces)
+(define (ai_move pieces)
  (let* ([minimax_res (send chess_agent minimax pieces)]
         [move (cdr minimax_res)])
     (displayln minimax_res)
